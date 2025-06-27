@@ -37,11 +37,16 @@
 #include <SoftwareSerial.h>
 #include <RTClib.h>
 #include <SD.h>
+#include <LowPower.h>
 
 // RS485 control pins
 #define DE_PIN 2
 #define RE_PIN 3
 #define SD_CS 4
+
+
+#define BATTERY_PIN A1
+float cutoff = 0; //low voltage cutoff
 
 // Command to read: Temp, Moisture, EC
 uint8_t Com[8] = { 0x01, 0x03, 0x00, 0x00, 0x00, 0x03, 0x05, 0xCB };
@@ -82,7 +87,7 @@ void setup() {
   // Write to SD card
     File logFile = SD.open("logdata.txt", FILE_WRITE);
     if (logFile) {
-      logFile.println(String("Date, Time, Temperature (C), Soil Moisture (%), Electrical Conductivity (μS/cm)"));
+      logFile.println(String("Date, Time, Temperature (C), Soil Moisture (%), Electrical Conductivity (μS/cm), Battery (Voltage)"));
       logFile.close();
       Serial.println("Header string logged.\n");
     } else {
@@ -92,6 +97,8 @@ void setup() {
 
 
 void loop() {
+  float batt = readBatteryVoltage();
+  delay(10);
   if (getTemperature()) {
     DateTime now = rtc.now();
     
@@ -101,6 +108,7 @@ void loop() {
     Serial.print("Soil T: "); Serial.print(temperatureValue[0] / 10.0); Serial.println(" °C");
     Serial.print("Soil M: "); Serial.print(temperatureValue[1] / 10.0); Serial.println(" %RH");
     Serial.print("Soil EC: "); Serial.print(temperatureValue[2]); Serial.println(" μS/cm");
+    Serial.print("Battery Voltage: "); Serial.println(String(batt));
 
     // Format time
     String init;
@@ -114,7 +122,7 @@ void loop() {
     String dataString = init + timestamp + ", " +
                         String(temperatureValue[0] / 10.0) + ", " +
                         String(temperatureValue[1] / 10.0) + " , " +
-                        String(temperatureValue[2]);
+                        String(temperatureValue[2]), String(batt);
 
     // Write to SD card
     File logFile = SD.open("logdata.txt", FILE_WRITE);
@@ -126,8 +134,18 @@ void loop() {
       Serial.println("Failed to open log file.");
     }
   }
-
-  delay(2000);
+  delay(1000);
+  if (batt < cutoff) {
+    LowPower.idle(SLEEP_FOREVER, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, 
+                  SPI_OFF, USART0_OFF, TWI_OFF); //sleep for 8seconds
+  } else {
+    // Sleep for 2 minutes (2 × 60 = 120 seconds)
+    for (int k = 0; k < 15; k++) { // 15 × 8 = 120 sec
+    LowPower.idle(SLEEP_8S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, 
+                  SPI_OFF, USART0_OFF, TWI_OFF); //sleep for 8seconds
+  }
+  }
+  
 }
 
 // Returns true if CRC check passed and values were stored
@@ -151,6 +169,8 @@ bool getTemperature() {
   }
 
   if (i < 11) {
+    for (uint8_t j = 0; j < 11; j++) {Serial.print(temperatureBuffer[j],HEX); Serial.print(" ");};
+    Serial.println();
     Serial.println("Incomplete response.");
     return false;
   }
@@ -189,4 +209,11 @@ uint16_t calculateCRC(uint8_t *data, uint8_t length) {
     }
   }
   return crc;
+}
+
+
+float readBatteryVoltage() {
+  int raw = analogRead(BATTERY_PIN);
+  float voltageAtA0 = raw * (5.0 / 1023.0); // A0 sees divided voltage
+  return voltageAtA0 * ((22.0 + 10.0) / 10.0); // Scale back up
 }
