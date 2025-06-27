@@ -4,6 +4,10 @@
 // Arduino 5V   →  VCC on RTC, SD card module, RS485 module
 // Arduino GND  →  GND on RTC, SD card module, RS485 module, and sensor
 
+// Battery Monitoring Pin
+// Battery (up to 12V is fine) + ---- Resistor: 22kΩ ---- Arduino A1 ---- Resistor: 10kΩ ---- GND
+
+
 // RTC MODULE //
 // RTC SDA  →  Arduino A4
 // RTC SCL  →  Arduino A5
