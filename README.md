@@ -1,4 +1,5 @@
-Parts List:
+//Parts List://
+
 DFRobot SEN0601 Soil Moisture, Temperature, and Electrical Conductivity Sensor: https://www.dfrobot.com/product-2817.html?srsltid=AfmBOopVAFm2FJkAC2ND2kJ8A9Ufb6X18eEhR8P3MBJBMhrqkQRtu3Hd
 Arduino Nano or similar: https://www.amazon.ca/dp/B0816SGKHH?ref_=ppx_hzsearch_conn_dt_b_fed_asin_title_2
 Real Time Clock Module: https://www.amazon.ca/dp/B07V68443F?ref_=ppx_hzsearch_conn_dt_b_fed_asin_title_1
