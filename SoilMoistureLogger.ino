@@ -115,23 +115,26 @@ void loop() {
     Serial.print("Battery Voltage: "); Serial.println(String(batt));
 
     // Format time
-    String init;
     char timestamp[25];
     sprintf(timestamp, "%04d/%02d/%02d,%02d:%02d:%02d",
         now.year(), now.month(), now.day(),
         now.hour(), now.minute(), now.second());
-    Serial.println(timestamp);
 
-    // Format data
-    String dataString = init + timestamp + ", " +
-                        String(temperatureValue[0] / 10.0) + ", " +
-                        String(temperatureValue[1] / 10.0) + " , " +
-                        String(temperatureValue[2]), String(batt);
+
 
     // Write to SD card
     File logFile = SD.open("logdata.txt", FILE_WRITE);
     if (logFile) {
-      logFile.println(dataString);
+      logFile.print(timestamp);
+      logFile.print(",");
+      logFile.print(temperatureValue[0] / 10.0, 1);
+      logFile.print(",");
+      logFile.print(temperatureValue[1] / 10.0, 1);
+      logFile.print(",");
+      logFile.print(temperatureValue[2]);
+      logFile.print(",");
+      logFile.println(batt, 2);
+      logFile.flush();
       logFile.close();
       Serial.println("Data logged.\n");
     } else {
@@ -146,7 +149,7 @@ void loop() {
     // Sleep for 2 minutes (2 × 60 = 120 seconds)
     for (int k = 0; k < 15; k++) { // 15 × 8 = 120 sec
     LowPower.idle(SLEEP_8S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, 
-                  SPI_OFF, USART0_OFF, TWI_OFF); //sleep for 8seconds
+                  SPI_ON, USART0_OFF, TWI_OFF); //sleep for 8seconds
   }
   }
   
